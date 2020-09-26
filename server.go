@@ -9,6 +9,6 @@ import (
 type discountServer struct {
 }
 
-func (s *discountServer) Discount(ctx context.Context, req *pb.DicountRequest) (*pb.DiscountRe) {
+func (s *discountServer) Discount(ctx context.Context, req *pb.DicountRequest) *pb.DiscountResponse {
 
 }
