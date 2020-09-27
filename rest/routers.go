@@ -2,6 +2,7 @@ package rest
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/mux"
 )
@@ -19,7 +20,7 @@ type routes []route
 
 //NewRouter router principal
 func NewRouter(appParams AppParams) *mux.Router {
-	appRoutes := routes{} //loadRoutes()
+	appRoutes := loadRoutes()
 	router := mux.NewRouter().StrictSlash(true)
 	for _, route := range appRoutes {
 		var handler http.Handler
@@ -45,23 +46,16 @@ func httpMethods(method ...string) []string {
 	return method
 }
 
-// func loadRoutes() routes {
-// 	var appRoutes = routes{
+func loadRoutes() routes {
+	var appRoutes = routes{
 
-// 		route{
-// 			"Clientes",
-// 			httpMethods(strings.ToUpper("Get"), strings.ToUpper("Post")),
-// 			"/v1/api/clientes",
-// 			mkHandlerListaCliente(clienteDAO),
-// 			true,
-// 		},
-// 		route{
-// 			"NovoCliente",
-// 			httpMethods(strings.ToUpper("Post")),
-// 			"/v1/api/cliente/novo",
-// 			mkHandlerNovoCliente(clienteDAO),
-// 			true,
-// 		},
-// 	}
-// 	return appRoutes
-// }
+		route{
+			"ProductList",
+			httpMethods(strings.ToUpper("Get"), strings.ToUpper("Post")),
+			"/product",
+			ProductsHandler,
+			true,
+		},
+	}
+	return appRoutes
+}

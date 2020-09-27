@@ -9,5 +9,5 @@ import (
 func main() {
 	log.Printf("Server started")
 
-	rest.Listen()
+	fmt.Fatal(rest.Listen())
 }

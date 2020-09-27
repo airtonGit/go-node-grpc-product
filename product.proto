@@ -1,22 +1,22 @@
 syntax = "proto3";
 
 option go_package = "github.com/airtonGit/go-node-grpc/product;product";
-option java_multiple_files = true;
-option java_package = "io.grpc.examples.product";
-option java_outer_classname = "ProductProto";
+// option java_multiple_files = true;
+// option java_package = "io.grpc.examples.product";
+// option java_outer_classname = "ProductProto";
 
 package product;
 
 // The greeting service definition.
-service Discount {
-  // Sends a greeting
+service DiscountService {
+  
   rpc Discount (DiscountRequest) returns (DiscountReply) {}
 }
 
 // The request message containing the user's name.
 message DiscountRequest {
-  int32 user_id = 1;
-  int32 product_id = 2;
+  string user_id = 1;
+  string product_id = 2;
 }
 
 // The response message containing the greetings

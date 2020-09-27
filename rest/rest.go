@@ -17,13 +17,13 @@ type AppParams struct {
 
 //Setup flags de CLI e conexao banco
 func Setup() (AppParams, error) {
-	fs := flag.NewFlagSet("hospedare", flag.ExitOnError)
+	fs := flag.NewFlagSet("productList", flag.ExitOnError)
 	var (
 		listenAdr = fs.String("listen-addr", "127.0.0.1:8000", "Hospedare listen addr")
 	)
 
 	if err := ff.Parse(fs, os.Args[1:],
-		ff.WithEnvVarPrefix("REST"),
+		ff.WithEnvVarPrefix("PRODUCTLIST"),
 		ff.WithConfigFile("product.conf"),
 		ff.WithConfigFileParser(ff.PlainParser),
 	); err != nil {

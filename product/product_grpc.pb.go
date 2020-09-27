@@ -13,78 +13,76 @@ import (
 // is compatible with the grpc package it is being compiled against.
 const _ = grpc.SupportPackageIsVersion6
 
-// DiscountClient is the client API for Discount service.
+// DiscountServiceClient is the client API for DiscountService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type DiscountClient interface {
-	// Sends a greeting
+type DiscountServiceClient interface {
 	Discount(ctx context.Context, in *DiscountRequest, opts ...grpc.CallOption) (*DiscountReply, error)
 }
 
-type discountClient struct {
+type discountServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewDiscountClient(cc grpc.ClientConnInterface) DiscountClient {
-	return &discountClient{cc}
+func NewDiscountServiceClient(cc grpc.ClientConnInterface) DiscountServiceClient {
+	return &discountServiceClient{cc}
 }
 
-func (c *discountClient) Discount(ctx context.Context, in *DiscountRequest, opts ...grpc.CallOption) (*DiscountReply, error) {
+func (c *discountServiceClient) Discount(ctx context.Context, in *DiscountRequest, opts ...grpc.CallOption) (*DiscountReply, error) {
 	out := new(DiscountReply)
-	err := c.cc.Invoke(ctx, "/product.Discount/Discount", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/product.DiscountService/Discount", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// DiscountServer is the server API for Discount service.
-// All implementations must embed UnimplementedDiscountServer
+// DiscountServiceServer is the server API for DiscountService service.
+// All implementations must embed UnimplementedDiscountServiceServer
 // for forward compatibility
-type DiscountServer interface {
-	// Sends a greeting
+type DiscountServiceServer interface {
 	Discount(context.Context, *DiscountRequest) (*DiscountReply, error)
-	mustEmbedUnimplementedDiscountServer()
+	mustEmbedUnimplementedDiscountServiceServer()
 }
 
-// UnimplementedDiscountServer must be embedded to have forward compatible implementations.
-type UnimplementedDiscountServer struct {
+// UnimplementedDiscountServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedDiscountServiceServer struct {
 }
 
-func (*UnimplementedDiscountServer) Discount(context.Context, *DiscountRequest) (*DiscountReply, error) {
+func (*UnimplementedDiscountServiceServer) Discount(context.Context, *DiscountRequest) (*DiscountReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Discount not implemented")
 }
-func (*UnimplementedDiscountServer) mustEmbedUnimplementedDiscountServer() {}
+func (*UnimplementedDiscountServiceServer) mustEmbedUnimplementedDiscountServiceServer() {}
 
-func RegisterDiscountServer(s *grpc.Server, srv DiscountServer) {
-	s.RegisterService(&_Discount_serviceDesc, srv)
+func RegisterDiscountServiceServer(s *grpc.Server, srv DiscountServiceServer) {
+	s.RegisterService(&_DiscountService_serviceDesc, srv)
 }
 
-func _Discount_Discount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _DiscountService_Discount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DiscountRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DiscountServer).Discount(ctx, in)
+		return srv.(DiscountServiceServer).Discount(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/product.Discount/Discount",
+		FullMethod: "/product.DiscountService/Discount",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DiscountServer).Discount(ctx, req.(*DiscountRequest))
+		return srv.(DiscountServiceServer).Discount(ctx, req.(*DiscountRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-var _Discount_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "product.Discount",
-	HandlerType: (*DiscountServer)(nil),
+var _DiscountService_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "product.DiscountService",
+	HandlerType: (*DiscountServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "Discount",
-			Handler:    _Discount_Discount_Handler,
+			Handler:    _DiscountService_Discount_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
