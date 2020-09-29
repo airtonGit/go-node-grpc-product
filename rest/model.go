@@ -2,15 +2,17 @@ package rest
 
 import "time"
 
+type productDiscount struct {
+	Percent      float32 `json:"pct"`
+	ValueInCents int32   `json:"value_in_cents"`
+}
+
 type product struct {
-	ID           string `json:"id"`
-	PriceInCents int32  `json:"price_in_cents"`
-	Title        string `json:"title"`
-	Description  string `json:"description"`
-	Discount     struct {
-		Percent      float32 `json:"pct"`
-		ValueInCents int32   `json:"value_in_cents"`
-	}
+	ID           string          `json:"id"`
+	PriceInCents int32           `json:"price_in_cents"`
+	Title        string          `json:"title"`
+	Description  string          `json:"description"`
+	Discount     productDiscount `json:"discount"`
 }
 
 type user struct {
