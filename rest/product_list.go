@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 	"sync"
@@ -26,12 +27,12 @@ func jsonEncode(products []product) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-type jobParams struct {
+type jobEnvelope struct {
 	UserID  string
 	Product product
 }
 
-func worker(ctx context.Context, clt discountClient, jobs <-chan jobParams, results chan<- product) {
+func worker(ctx context.Context, clt discountClient, jobs <-chan jobEnvelope, results chan<- product) {
 	for j := range jobs {
 		pResp := j.Product
 		var err error
@@ -45,6 +46,27 @@ func worker(ctx context.Context, clt discountClient, jobs <-chan jobParams, resu
 
 type discountClient interface {
 	DiscountAsk(context.Context, string, string) (float32, int32, error)
+}
+
+//what I have done wihd
+func discountsReceiver(ctx context.Context, productsMap map[string]product, results <-chan product, done chan<- struct{}) error {
+	for {
+		select {
+		case <-ctx.Done():
+			log.Println("results agregation gr ctx.done")
+			return errors.New("ctx.done")
+		case prod, ok := <-results:
+			if !ok {
+				log.Println("results agregation ch closed")
+				close(done)
+				return errors.New("results ch closed")
+			}
+			productsMap[prod.ID] = prod
+		default:
+			log.Println("workser result aggregation sleep waiting results")
+			time.Sleep(time.Second)
+		}
+	}
 }
 
 func askDiscount(ctx context.Context, dscClient discountClient, products []product, userID string) []product {
@@ -62,33 +84,14 @@ func askDiscount(ctx context.Context, dscClient discountClient, products []produ
 	}
 
 	results := make(chan product, 50)
-	discountAskCh := make(chan jobParams, 50)
+	discountAskCh := make(chan jobEnvelope, 50)
 	//workers results collection
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				log.Println("results agregation gr ctx.done")
-				return
-			case prod, ok := <-results:
-				if !ok {
-					log.Println("results agregation ch closed")
-					allResultsDone <- struct{}{}
-					return
-				}
-				//updating map with discount
-				respMap[prod.ID] = prod
-			default:
-				log.Println("workser result aggregation sleep waiting results")
-				time.Sleep(time.Second)
-			}
-		}
-	}()
+	go discountsReceiver(ctx, respMap, results, allResultsDone)
 
 	//4 workers launch
-	for i := 0; i < 3; i++ {
+	wgWorkers.Add(4)
+	for i := 0; i < 4; i++ {
 		go func() {
-			wgWorkers.Add(1)
 			defer wgWorkers.Done()
 			worker(ctx, dscClient, discountAskCh, results)
 		}()
@@ -103,19 +106,21 @@ func askDiscount(ctx context.Context, dscClient discountClient, products []produ
 			shouldStop = true
 			continue
 		default:
-			job := jobParams{userID, products[i]}
+			job := jobEnvelope{userID, products[i]}
 			discountAskCh <- job
 		}
 
 	}
 	close(discountAskCh)
-	log.Println("WaitGroup...")
+
+	//waiting the 4 workers finish
 	wgWorkers.Wait()
-	log.Println("WaitGroup...done")
+
+	//No more results to receive
 	close(results)
-	log.Println("waitin AllResultsDone")
+
+	//waiting results maping
 	<-allResultsDone
-	log.Println("waitin AllResultsDone done.")
 
 	//if timeout happens responds with zero discount
 	for _, prod := range respMap {
@@ -124,9 +129,30 @@ func askDiscount(ctx context.Context, dscClient discountClient, products []produ
 	return resp
 }
 
+func errResponse(w http.ResponseWriter, status int, msg string) {
+	log.Println("err response:", msg)
+	w.WriteHeader(status)
+	w.Write([]byte(msg))
+}
+
 func ProductsHandler(w http.ResponseWriter, r *http.Request) {
 	innerCtx, innCanel := context.WithTimeout(r.Context(), 250*time.Millisecond)
 	defer innCanel()
 	dscClt := dc.NewDiscountClient(discountAddress, askDiscountTimeout)
-	askDiscount(innerCtx, dscClt, productsFixtures, "1")
+
+	if err := dscClt.Dial(); err != nil {
+		errResponse(w, http.StatusFailedDependency, err.Error())
+		return
+	}
+	defer dscClt.Close()
+	products := askDiscount(innerCtx, dscClt, productsFixtures, "1")
+
+	buf, err := jsonEncode(products)
+	if err != nil {
+		errResponse(w, http.StatusServiceUnavailable, err.Error())
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(buf)
 }

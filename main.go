@@ -3,6 +3,8 @@ package main
 import (
 	"log"
 
+	_ "net/http/pprof"
+
 	"github.com/airtonGit/go-node-grpc-product/rest"
 )
 

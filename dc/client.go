@@ -30,6 +30,7 @@ func (c *DiscountClient) Dial() error {
 	c.conn, err = grpc.Dial(c.address, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
 		log.Println("DiscountClient fail grpc.Dial err:", err.Error())
+		return err
 	}
 	c.pbDiscountService = pb.NewDiscountServiceClient(c.conn)
 	return err
@@ -44,7 +45,7 @@ func (c *DiscountClient) DiscountAsk(ctx context.Context, userID, productID stri
 	defer cancel()
 	r, err := c.pbDiscountService.Discount(requestCtx, &pb.DiscountRequest{ProductId: productID, UserId: userID})
 	if err != nil {
-		log.Printf("could not ask discount: %v", err)
+		log.Printf("DicountClient could not ask discount: %v", err)
 		return 0, 0, err
 	}
 	return r.Pct, r.ValueInCents, nil
