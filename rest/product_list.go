@@ -32,16 +32,25 @@ type jobEnvelope struct {
 	Product product
 }
 
-func worker(ctx context.Context, clt discountClient, jobs <-chan jobEnvelope, results chan<- product) {
+func worker(ctx context.Context, clt discountClient, jobs <-chan jobEnvelope, results chan<- product) error {
 	for j := range jobs {
+		select {
+		case <-ctx.Done():
+			return errors.New("ctx.done")
+
+		default:
+
+		}
 		pResp := j.Product
 		var err error
 		pResp.Discount.Percent, pResp.Discount.ValueInCents, err = clt.DiscountAsk(ctx, j.UserID, j.Product.ID)
 		if err != nil {
 			log.Println("worker askDiscount err:", err.Error())
+			continue
 		}
 		results <- pResp
 	}
+	return nil
 }
 
 type discountClient interface {

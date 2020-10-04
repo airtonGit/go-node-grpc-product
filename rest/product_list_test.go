@@ -21,7 +21,7 @@ var discountMockFunc = func(ctx context.Context, userID string, productID string
 }
 
 func generateJobs() <-chan jobEnvelope {
-	rc := make(chan jobEnvelope)
+	rc := make(chan jobEnvelope, 10)
 	go func() {
 		defer close(rc)
 
@@ -34,7 +34,7 @@ func generateJobs() <-chan jobEnvelope {
 }
 
 func generateResults() <-chan product {
-	rc := make(chan product)
+	rc := make(chan product, 10)
 	go func() {
 		defer close(rc)
 
@@ -150,17 +150,15 @@ func TestDiscountReceiver(t *testing.T) {
 }
 
 func TestWorker(t *testing.T) {
-	jobs := generateJobs()
-	done := make(chan struct{})
-	results := make(chan product)
-
 	type input struct {
 		cMock   discountClientMock
 		prodMap map[string]product
 		jobs    <-chan jobEnvelope
 		results chan<- product
+		done    chan struct{}
 	}
 	type want struct {
+		desc    string
 		prodMap map[string]product
 	}
 	for _, testcase := range []struct {
@@ -169,7 +167,7 @@ func TestWorker(t *testing.T) {
 		want  want
 	}{
 		{
-			name: "Teste1",
+			name: "Ctx done",
 			input: input{
 				cMock: discountMockFunc,
 				prodMap: map[string]product{
@@ -177,10 +175,34 @@ func TestWorker(t *testing.T) {
 						ID: "1",
 					},
 				},
-				jobs:    jobs,
-				results: results,
+				jobs:    generateJobs(),
+				results: make(chan product, 10),
+				done:    make(chan struct{}),
 			},
 			want: want{
+				desc: "ctx.done",
+				prodMap: map[string]product{
+					"1": {
+						ID: "1",
+					},
+				},
+			},
+		},
+		{
+			name: "normal finish",
+			input: input{
+				cMock: discountMockFunc,
+				prodMap: map[string]product{
+					"1": {
+						ID: "1",
+					},
+				},
+				jobs:    generateJobs(),
+				results: make(chan product, 10),
+				done:    make(chan struct{}),
+			},
+			want: want{
+				desc: "normal finish len3",
 				prodMap: map[string]product{
 					"1": {
 						ID: "1",
@@ -190,8 +212,27 @@ func TestWorker(t *testing.T) {
 		},
 	} {
 		t.Run(testcase.name, func(t *testing.T) {
-			worker(context.TODO(), testcase.input.cMock, testcase.input.jobs, testcase.input.results)
-			<-done
+			switch testcase.name {
+
+			case "Ctx done":
+				ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+				cancel()
+
+				err := worker(ctx, testcase.input.cMock, testcase.input.jobs, testcase.input.results)
+				got := err.Error()
+				want := testcase.want.desc
+				if want != got {
+					t.Fatalf("want %s got %s", want, got)
+				}
+			case "normal finish":
+				ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+				defer cancel()
+				err := worker(ctx, testcase.input.cMock, testcase.input.jobs, testcase.input.results)
+				want := fmt.Sprintf("normal finish len%d", len(testcase.input.prodMap))
+				if err != nil && want != err.Error() {
+					t.Fatalf("want %s got %s", want, err.Error())
+				}
+			}
 
 		})
 	}
