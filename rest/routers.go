@@ -20,7 +20,7 @@ type routes []route
 
 //NewRouter router principal
 func NewRouter(appParams AppParams) *mux.Router {
-	appRoutes := loadRoutes()
+	appRoutes := loadRoutes(appParams)
 	router := mux.NewRouter().StrictSlash(true)
 	for _, route := range appRoutes {
 		var handler http.Handler
@@ -46,14 +46,14 @@ func httpMethods(method ...string) []string {
 	return method
 }
 
-func loadRoutes() routes {
+func loadRoutes(params AppParams) routes {
 	var appRoutes = routes{
 
 		route{
 			"ProductList",
 			httpMethods(strings.ToUpper("Get"), strings.ToUpper("Post")),
 			"/product",
-			ProductsHandler,
+			makeProductsHandler(params),
 			true,
 		},
 	}

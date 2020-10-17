@@ -1,0 +1,18 @@
+version: '3.3'
+
+services:
+  
+  discount:
+    image: docker.pkg.github.com/airtongit/go-node-grpc-product/discount:latest
+    environment:
+      DISCOUNT_LISTEN_ADDR: 0.0.0.0:50051
+    ports:
+      - 50051:50051
+
+  products:
+    image: docker.pkg.github.com/airtongit/go-node-grpc-product/product-list:latest
+    environment:
+      PRODUCTLIST_LISTEN_ADDR: :8000
+      PRODUCTLIST_DISCOUNT_ADDR: discount:50051
+    ports:
+      - 8000:8000

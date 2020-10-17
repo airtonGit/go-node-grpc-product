@@ -2,6 +2,7 @@ package rest
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -15,9 +16,10 @@ import (
 
 //AppParams banco e listenAddr
 type AppParams struct {
-	ListenAddr string
-	CpuProf    bool
-	MemProf    bool
+	ListenAddr   string
+	DiscountAddr string
+	CpuProf      bool
+	MemProf      bool
 }
 
 func cpuProf() func() {
@@ -57,9 +59,10 @@ func memProf() func() {
 func Setup() (AppParams, error) {
 	fs := flag.NewFlagSet("productList", flag.ExitOnError)
 	var (
-		listenAdr = fs.String("listen-addr", ":8000", "Hospedare listen addr")
-		cpuprof   = fs.Bool("cpuprof", false, "Enable to perform cpu profiling saving on cpu.prof")
-		memprof   = fs.Bool("memprof", false, "Enable to perform memory profiling saving on mem.prof")
+		listenAdr    = fs.String("listen-addr", ":8000", "Hospedare listen addr:port")
+		discountAddr = fs.String("discount-addr", ":50051", "Discount service addr:port")
+		cpuprof      = fs.Bool("cpuprof", false, "Enable to perform cpu profiling saving on cpu.prof")
+		memprof      = fs.Bool("memprof", false, "Enable to perform memory profiling saving on mem.prof")
 	)
 
 	if err := ff.Parse(fs, os.Args[1:],
@@ -70,7 +73,7 @@ func Setup() (AppParams, error) {
 		log.Println("FlagsFirst err:", err)
 	}
 
-	return AppParams{*listenAdr, *cpuprof, *memprof}, nil
+	return AppParams{*listenAdr, *discountAddr, *cpuprof, *memprof}, nil
 }
 
 //Listen inicia serviço
@@ -104,6 +107,9 @@ func Listen() error {
 	go func() {
 		err = srv.ListenAndServe()
 	}()
+
+	log.Printf(fmt.Sprintf("Server started %s discount-service %s", params.ListenAddr, params.DiscountAddr))
+
 	<-done
 
 	return err

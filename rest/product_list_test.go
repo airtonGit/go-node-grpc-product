@@ -6,6 +6,8 @@ import (
 	"log"
 	"testing"
 	"time"
+
+	"github.com/airtonGit/go-node-grpc-product/dc"
 )
 
 type discountClientMock func(ctx context.Context, userID string, productID string) (float32, int32, error)
@@ -239,8 +241,16 @@ func TestWorker(t *testing.T) {
 }
 
 func TestAskDiscount(t *testing.T) {
+	dscClt := dc.NewDiscountClient(discountAddress, askDiscountTimeout)
+
+	if err := dscClt.Dial(); err != nil {
+		t.Fatal("dial err", err.Error())
+		return
+	}
+	defer dscClt.Close()
+
 	type input struct {
-		cMock    discountClientMock
+		cMock    discountClient
 		products []product
 		userID   string
 	}
@@ -256,7 +266,7 @@ func TestAskDiscount(t *testing.T) {
 		{
 			name: "Test1",
 			input: input{
-				cMock:    discountMockFunc,
+				cMock:    dscClt,
 				products: productsFixtures,
 				userID:   "1",
 			},

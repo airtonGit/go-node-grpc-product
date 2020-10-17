@@ -9,7 +9,5 @@ import (
 )
 
 func main() {
-	log.Printf("Server started")
-
 	log.Fatal(rest.Listen())
 }

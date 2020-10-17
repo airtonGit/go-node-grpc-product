@@ -14,8 +14,7 @@ import (
 )
 
 const (
-	discountAddress    = "localhost:50051"
-	askDiscountTimeout = time.Millisecond * 100
+	askDiscountTimeout = time.Millisecond * 250
 )
 
 func jsonEncode(products []product) ([]byte, error) {
@@ -63,6 +62,7 @@ func discountsReceiver(ctx context.Context, productsMap map[string]product, resu
 		select {
 		case <-ctx.Done():
 			log.Println("results agregation gr ctx.done")
+			close(done)
 			return errors.New("ctx.done")
 		case prod, ok := <-results:
 			if !ok {
@@ -144,24 +144,27 @@ func errResponse(w http.ResponseWriter, status int, msg string) {
 	w.Write([]byte(msg))
 }
 
-func ProductsHandler(w http.ResponseWriter, r *http.Request) {
-	innerCtx, innCanel := context.WithTimeout(r.Context(), 250*time.Millisecond)
-	defer innCanel()
-	dscClt := dc.NewDiscountClient(discountAddress, askDiscountTimeout)
+func makeProductsHandler(params AppParams) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		innerCtx, innCancel := context.WithTimeout(r.Context(), 250*time.Millisecond)
+		defer innCancel()
 
-	if err := dscClt.Dial(); err != nil {
-		errResponse(w, http.StatusFailedDependency, err.Error())
-		return
+		dscClt := dc.NewDiscountClient(params.DiscountAddr, askDiscountTimeout)
+
+		if err := dscClt.Dial(); err != nil {
+			errResponse(w, http.StatusFailedDependency, err.Error())
+			return
+		}
+		defer dscClt.Close()
+		products := askDiscount(innerCtx, dscClt, productsFixtures, "1")
+
+		buf, err := jsonEncode(products)
+		if err != nil {
+			errResponse(w, http.StatusServiceUnavailable, err.Error())
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		w.Write(buf)
 	}
-	defer dscClt.Close()
-	products := askDiscount(innerCtx, dscClt, productsFixtures, "1")
-
-	buf, err := jsonEncode(products)
-	if err != nil {
-		errResponse(w, http.StatusServiceUnavailable, err.Error())
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	w.Write(buf)
 }
