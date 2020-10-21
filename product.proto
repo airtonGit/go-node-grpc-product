@@ -1,9 +1,6 @@
 syntax = "proto3";
 
 option go_package = "github.com/airtonGit/go-node-grpc/product;product";
-// option java_multiple_files = true;
-// option java_package = "io.grpc.examples.product";
-// option java_outer_classname = "ProductProto";
 
 package product;
 
@@ -22,5 +19,5 @@ message DiscountRequest {
 // The response message containing the greetings
 message DiscountReply {
   float pct = 1;
-  int32 value_in_cents = 2;
+  int32 value_in_cents = 3;
 }
