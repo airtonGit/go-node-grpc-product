@@ -2,9 +2,10 @@
 
 ## Getting Started
 
-### run docker compose
+* Run docker compose
 
 ```
+cd http-product-list
 docker-compose up -d
 ```
 

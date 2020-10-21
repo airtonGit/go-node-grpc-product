@@ -5,6 +5,7 @@
 * Run docker compose
 
 ```
+cd http-product-list
 docker-compose up -d
 ```
 
