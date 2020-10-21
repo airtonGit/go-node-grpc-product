@@ -2,7 +2,7 @@
 
 ## Getting Started
 
-### run docker compose
+* Run docker compose
 
 ```
 docker-compose up -d
