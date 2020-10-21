@@ -12,7 +12,7 @@ Acting as gRPC server, accept incoming requests for discounts checks for some da
 
 ## Getting Started
 
-* Run docker compose
+For local run, you will need Docker and docker-compose, in bash or prompt do the following steps:
 
 ```
 cd http-product-list
