@@ -235,19 +235,19 @@ func TestWorker(t *testing.T) {
 					t.Fatalf("want %s got %s", want, err.Error())
 				}
 			}
-
 		})
 	}
 }
 
 func TestAskDiscount(t *testing.T) {
-	dscClt := dc.NewDiscountClient(discountAddress, askDiscountTimeout)
+	dscClt := dc.NewDiscountClient(":50051", askDiscountTimeout)
 
-	if err := dscClt.Dial(); err != nil {
+	closeFunc, err := dscClt.Dial()
+	if err != nil {
 		t.Fatal("dial err", err.Error())
 		return
 	}
-	defer dscClt.Close()
+	defer closeFunc()
 
 	type input struct {
 		cMock    discountClient
@@ -272,7 +272,15 @@ func TestAskDiscount(t *testing.T) {
 			},
 			want: []want{
 				{
-					dsc:   0.85,
+					dsc:   5,
+					value: 7,
+				},
+				{
+					dsc:   5,
+					value: 150,
+				},
+				{
+					dsc:   5,
 					value: 150,
 				},
 			},

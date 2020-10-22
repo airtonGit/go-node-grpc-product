@@ -34,9 +34,9 @@ const user_list = [
 ]
 
 const product_list = [
-    { id: '1', price_in_cents: 150 },
-    { id: '2', price_in_cents: 299 },
-    { id: '3', price_in_cents: 999 },
+    { id: '1', price_in_cents: 330 * 100 },
+    { id: '2', price_in_cents: 299 * 100 },
+    { id: '3', price_in_cents: 279 * 100 },
 ]
 
 
