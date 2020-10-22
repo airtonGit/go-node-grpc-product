@@ -6,13 +6,28 @@ using de file product.proto for gRPC e protobuf definitions.
 
 This sample shows a http server and a gRPC client, it spans 4 workers to make gRPC requests in parallel
 
++ to run tests you will need GO env installed
+```
+cd http-product-list
+go test ./...
+```
+
 ### NodeJs
 
 Acting as gRPC server, accept incoming requests for discounts checks for some date related (birthday or blackfriday)
 
++ to run tests you will need nodejs and npm installed
+
+```
+cd grpc-discount
+npm run test
+```
+
+### 
+
 ## Getting Started
 
-* Run docker compose
+For local run, you will need Docker and docker-compose, in bash or prompt do the following steps:
 
 ```
 cd http-product-list
