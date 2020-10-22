@@ -14,8 +14,8 @@ import (
 )
 
 const (
-	askDiscountTimeout = time.Millisecond * 10000
-	resquestTimeout    = time.Millisecond * 10000
+	askDiscountTimeout = time.Millisecond * 5000
+	resquestTimeout    = time.Millisecond * 5000
 )
 
 //jsonEncode jsonfy the response product list

@@ -6,7 +6,7 @@ const BIRTHDAY_DISCOUNT = process.env.DISCOUNT_BIRTHDAY_DISCOUNT || 5.00; //5%
 const BALCKFRIDAY_DISCOUNT = process.env.DISCOUNT_BLACKFRIDAY_DISCOUNT || 10.00; //10%
 const BALCKFRIDAY_DATE = process.env.DISCOUNT_BLACKFRIDAY_DATE || "11/25"
 
-var PROTO_PATH = __dirname + '/../product.proto';
+var PROTO_PATH = __dirname + '/product.proto';
 
 const packageDefinition = protoLoader.loadSync(PROTO_PATH);
 const product_proto = grpc.loadPackageDefinition(packageDefinition);
@@ -33,10 +33,15 @@ const user_list = [
     {id: '3', date_of_birth: '10/20/1987'}
 ]
 
+const discountItem = {
+    pct: 0.0,
+    value_in_cents: 0
+}
+
 const product_list = [
-    { id: '1', price_in_cents: 330 * 100 },
-    { id: '2', price_in_cents: 299 * 100 },
-    { id: '3', price_in_cents: 279 * 100 },
+    { id: '1', price_in_cents: 330 * 100, discount: discountItem },
+    { id: '2', price_in_cents: 299 * 100, discount: discountItem },
+    { id: '3', price_in_cents: 279 * 100, discount: discountItem },
 ]
 
 
@@ -77,32 +82,42 @@ const findDiscount = (user, product) => {
     //check today BlackFriday
         //birtday give discount
     //no birtday try product discount
-    let returnProduct = getProduct(product)
-
-    //check Black Friday
-    let isBlackfriday = checkSameMonthDay(BALCKFRIDAY_DATE, new Date())
-
-    if (isBlackfriday){
-        returnProduct.discount = {
-            pct: BALCKFRIDAY_DISCOUNT,
-            value_in_cents:  (BALCKFRIDAY_DISCOUNT / 100) * returnProduct.price_in_cents
+    let returnProduct = {
+        discount: {
+            pct: 0.0,
+            value_in_cents: 0
         }
     }
+    try{
+        returnProduct = getProduct(product)
 
-    //no Blackfriday, try birthday
-    if (!isBlackfriday && checkUserBirthday(user, new Date()) ){
-        returnProduct.discount = {
-            pct: BIRTHDAY_DISCOUNT,
-            value_in_cents:  (BIRTHDAY_DISCOUNT / 100) * returnProduct.price_in_cents
+        //check Black Friday
+        let isBlackfriday = checkSameMonthDay(BALCKFRIDAY_DATE, new Date())
+
+        if (isBlackfriday){
+            console.log("findDiscount blackFriday promo")
+            returnProduct.discount = {
+                pct: BALCKFRIDAY_DISCOUNT,
+                value_in_cents:  (BALCKFRIDAY_DISCOUNT / 100) * returnProduct.price_in_cents
+            }
         }
-    }
 
+        //no Blackfriday, try birthday
+        if (!isBlackfriday && checkUserBirthday(user, new Date()) ){
+            console.log("findDiscount birthday promo")
+            returnProduct.discount = {
+                pct: BIRTHDAY_DISCOUNT,
+                value_in_cents:  (BIRTHDAY_DISCOUNT / 100) * returnProduct.price_in_cents
+            }
+        }
+    }catch(err){
+        console.error("findDiscount catch err:", err)
+    }
     return returnProduct
 }
 
 //Implements Discount RPC method
 function discount(call, callback){
-    //console.log("discount request", call.request)
 
     let product = {}
 
@@ -110,9 +125,8 @@ function discount(call, callback){
         product = findDiscount(call.request.userId, call.request.productId)
     }catch(err){
         console.error("fail calculate discount err:", err)
+        callback(null, {})
     }
-
-    console.log("product with discount", product)
 
     var response = {
         pct: product.discount.pct,
